@@ -11,6 +11,8 @@ dotenv.config({ path: './.env' });
 
 // Route files
 const auth = require('./routes/authRoutes');
+const products = require('./routes/productRoutes');
+const watchlist = require('./routes/watchlistRoutes');
 
 const app = express();
 
@@ -34,6 +36,8 @@ app.use(apiLimiter);
 
 // Mount routers
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/products', products);
+app.use('/api/v1/watchlist', watchlist);
 
 // Error handler middleware (must be after routes)
 app.use(errorHandler);

@@ -17,6 +17,12 @@ export default function Navbar() {
           <div className="flex space-x-4 items-center">
             {user ? (
               <>
+                <Link href="/products" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Products
+                </Link>
+                <Link href="/watchlist" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Watchlist
+                </Link>
                 <Link href="/profile" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                   Profile
                 </Link>
