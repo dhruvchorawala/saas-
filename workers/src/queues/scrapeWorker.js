@@ -60,6 +60,18 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
       ...updateFields // Inject calculated history aggregates
     });
 
+    // 5. Detect changes and trigger alerts
+    const ChangeDetector = require('../notifications/ChangeDetector');
+    const AlertRuleEngine = require('../notifications/AlertRuleEngine');
+    
+    // We pass the old product state and the new scraped data
+    const changes = ChangeDetector.detectChanges(product, scrapedData);
+    
+    // Evaluate rules and enqueue notifications if necessary
+    // We pass the new updated product state
+    const newProductState = { price: updateFields.currentPrice || scrapedData.price };
+    await AlertRuleEngine.evaluateAndTrigger(productId, changes, newProductState);
+
     console.log(`[Job ${job.id}] Successfully completed.`);
     return scrapedData;
 
