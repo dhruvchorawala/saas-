@@ -28,4 +28,7 @@ router.route('/:id/history')
 router.route('/:id/intelligence')
   .get(exports.getProductIntelligence || require('../controllers/productController').getProductIntelligence);
 
+router.route('/:id/sellers')
+  .get(exports.getProductSellers || require('../controllers/productController').getProductSellers);
+
 module.exports = router;

@@ -245,3 +245,29 @@ exports.getProductIntelligence = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc    Get competing sellers for a product
+// @route   GET /api/v1/products/:id/sellers
+// @access  Private
+exports.getProductSellers = async (req, res, next) => {
+  try {
+    const Product = require('../models/Product');
+    const SellerComparisonService = require('../services/sellerComparisonService');
+
+    const targetProduct = await Product.findOne({ _id: req.params.id, user: req.user.id }).populate('sourceId', 'name domain');
+    if (!targetProduct) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Find potential candidates by category (or all if category isn't well defined yet)
+    // For scalability, we ideally filter by same brand or category. 
+    // Since our mock DB is small, we query all products for this user.
+    const allUserProducts = await Product.find({ user: req.user.id }).populate('sourceId', 'name domain');
+
+    const rankedSellers = await SellerComparisonService.compareSellers(targetProduct, allUserProducts);
+
+    res.status(200).json({ success: true, count: rankedSellers.length, data: rankedSellers });
+  } catch (err) {
+    next(err);
+  }
+};

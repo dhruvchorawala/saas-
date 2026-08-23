@@ -23,6 +23,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.3",
+    "string-similarity": "^4.0.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
