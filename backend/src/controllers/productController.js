@@ -107,6 +107,7 @@ exports.getProduct = async (req, res, next) => {
 exports.addProduct = async (req, res, next) => {
   try {
     req.body.user = req.user.id;
+    let isUrlScrape = false;
 
     // If URL is provided, validate domain
     if (req.body.url) {
@@ -119,10 +120,23 @@ exports.addProduct = async (req, res, next) => {
           source = await ProductSource.create({ name: domain, domain });
         }
         req.body.sourceId = source._id;
+        isUrlScrape = true;
       }
     }
 
     const product = await Product.create(req.body);
+
+    // Push scraping job to Redis queue asynchronously if URL was provided
+    if (isUrlScrape) {
+      const scrapeQueue = require('../queues/scrapeQueue');
+      await scrapeQueue.add('SCRAPE_PRODUCT', {
+        productId: product._id,
+        url: product.url,
+        userId: req.user.id
+      }, {
+        priority: 1 // High priority for manual adds
+      });
+    }
 
     res.status(201).json({ success: true, data: product });
   } catch (err) {
