@@ -42,7 +42,14 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     enum: ['ACTIVE', 'PAUSED'],
     default: 'ACTIVE'
-  }
+  },
+  currentPrice: { type: Number },
+  previousPrice: { type: Number },
+  lowestPrice: { type: Number },
+  highestPrice: { type: Number },
+  averagePrice: { type: Number },
+  priceChange: { type: Number },
+  priceChangePercentage: { type: Number }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', ProductSchema);

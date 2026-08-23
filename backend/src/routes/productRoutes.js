@@ -22,4 +22,10 @@ router.route('/:id')
   .put(updateProduct)
   .delete(deleteProduct);
 
+router.route('/:id/history')
+  .get(exports.getProductHistory || require('../controllers/productController').getProductHistory);
+
+router.route('/:id/intelligence')
+  .get(exports.getProductIntelligence || require('../controllers/productController').getProductIntelligence);
+
 module.exports = router;

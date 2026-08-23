@@ -26,6 +26,8 @@ const Product = mongoose.models.Product || mongoose.model('Product', ProductSche
 
 console.log('[Worker] Initializing scrapeWorker...');
 
+const { PriceIntelligenceService } = require('../intelligence/priceService');
+
 const scrapeWorker = new Worker('scrape-queue', async (job) => {
   const { productId, url, userId } = job.data;
   console.log(`[Job ${job.id}] Processing scrape for URL: ${url}`);
@@ -34,13 +36,20 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
     // 1. Execute scrape
     const scrapedData = await ScraperManager.scrape(url);
     
-    // 2. Update database with structured data
+    // 2. Load product
+    const product = await Product.findById(productId);
+    if (!product) throw new Error('Product not found in DB');
+
+    // 3. Process Intelligence (Snapshot + Aggregates)
+    const { updateFields } = await PriceIntelligenceService.processSnapshot(product, scrapedData);
+    
+    // 4. Update database with structured data and intelligence
     console.log(`[Job ${job.id}] Updating DB for Product ID: ${productId}`);
     await Product.findByIdAndUpdate(productId, {
       name: scrapedData.productName,
       brand: scrapedData.brand,
       image: scrapedData.image,
-      price: scrapedData.price,
+      price: scrapedData.price, // Raw current price
       mrp: scrapedData.mrp,
       discount: scrapedData.discount,
       currency: scrapedData.currency,
@@ -48,6 +57,7 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
       availability: scrapedData.availability,
       deliveryCharge: scrapedData.deliveryCharge,
       estimatedDeliveryDate: scrapedData.estimatedDeliveryDate,
+      ...updateFields // Inject calculated history aggregates
     });
 
     console.log(`[Job ${job.id}] Successfully completed.`);

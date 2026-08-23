@@ -196,3 +196,52 @@ exports.deleteProduct = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc    Get product price history
+// @route   GET /api/v1/products/:id/history
+// @access  Private
+exports.getProductHistory = async (req, res, next) => {
+  try {
+    const Product = require('../models/Product');
+    const PriceHistory = require('../models/PriceHistory');
+
+    const product = await Product.findOne({ _id: req.params.id, user: req.user.id });
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const history = await PriceHistory.find({ product: req.params.id }).sort('-createdAt');
+
+    res.status(200).json({ success: true, count: history.length, data: history });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get product intelligence stats
+// @route   GET /api/v1/products/:id/intelligence
+// @access  Private
+exports.getProductIntelligence = async (req, res, next) => {
+  try {
+    const Product = require('../models/Product');
+
+    const product = await Product.findOne({ _id: req.params.id, user: req.user.id });
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const intelligence = {
+      currentPrice: product.currentPrice,
+      previousPrice: product.previousPrice,
+      lowestPrice: product.lowestPrice,
+      highestPrice: product.highestPrice,
+      averagePrice: product.averagePrice,
+      priceChange: product.priceChange,
+      priceChangePercentage: product.priceChangePercentage
+    };
+
+    res.status(200).json({ success: true, data: intelligence });
+  } catch (err) {
+    next(err);
+  }
+};
