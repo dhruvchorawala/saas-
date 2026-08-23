@@ -82,6 +82,8 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
 }, {
   connection: redisConnection,
   concurrency: 5, // Process up to 5 jobs simultaneously
+  removeOnComplete: { count: 1000 }, // Prevent Redis memory leak
+  removeOnFail: { count: 2000 }
 });
 
 scrapeWorker.on('completed', (job) => {
@@ -93,11 +95,14 @@ scrapeWorker.on('failed', (job, err) => {
 });
 
 // Graceful shutdown handling
-process.on('SIGINT', async () => {
+const gracefulShutdown = async () => {
   console.log('[Worker] Shutting down gracefully...');
   await scrapeWorker.close();
   await browserService.close();
   process.exit(0);
-});
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 module.exports = scrapeWorker;

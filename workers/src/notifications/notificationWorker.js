@@ -45,7 +45,18 @@ const notificationWorker = new Worker('notification-queue', async (job) => {
   backoff: {
     type: 'exponential',
     delay: 5000 // Retry starting at 5s
-  }
+  },
+  removeOnComplete: { count: 1000 },
+  removeOnFail: { count: 2000 }
 });
+
+const gracefulShutdown = async () => {
+  console.log('[NotificationWorker] Shutting down gracefully...');
+  await notificationWorker.close();
+  process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 module.exports = notificationWorker;

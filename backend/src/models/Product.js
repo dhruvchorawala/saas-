@@ -52,4 +52,10 @@ const ProductSchema = new mongoose.Schema({
   priceChangePercentage: { type: Number }
 }, { timestamps: true });
 
+// Production Readiness Indexes
+ProductSchema.index({ user: 1, name: 1 });
+ProductSchema.index({ user: 1, currentPrice: 1 });
+ProductSchema.index({ trackingStatus: 1 });
+ProductSchema.index({ user: 1, updatedAt: -1 });
+
 module.exports = mongoose.model('Product', ProductSchema);

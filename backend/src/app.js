@@ -25,6 +25,15 @@ app.use(cookieParser());
 // Security headers
 app.use(helmet());
 
+// Sanitize data
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp());
+
 // Enable CORS
 app.use(cors({
   origin: 'http://localhost:3000', // frontend URL
