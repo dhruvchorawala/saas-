@@ -1,13 +1,60 @@
 version: '3.8'
+
 services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: saas_dev
+
   redis:
     image: redis:7-alpine
-    container_name: upai-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+
+  backend:
+    build: 
+      context: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/saas_dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=local_dev_secret_key
+      - JWT_EXPIRE=30d
+    depends_on:
+      - mongodb
+      - redis
+
+  workers:
+    build:
+      context: ./workers
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/saas_dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - mongodb
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+    depends_on:
+      - backend
 
 volumes:
+  mongo_data:
   redis_data:
