@@ -51,7 +51,7 @@ export default function ProductDetailsPage() {
         date: format(new Date(h.createdAt), 'MMM dd, HH:mm'),
         price: h.price
       })).reverse(); // Chronological for chart
-      
+
       setHistory(chartData);
 
     } catch (error) {
@@ -79,8 +79,8 @@ export default function ProductDetailsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
           <p className="text-sm text-gray-500 flex items-center mt-1">
-            <span className="font-medium text-gray-700 mr-2">{product.brand || 'Unknown Brand'}</span> • 
-            <span className="mx-2">{product.variant || 'Standard'}</span> • 
+            <span className="font-medium text-gray-700 mr-2">{product.brand || 'Unknown Brand'}</span> •
+            <span className="mx-2">{product.variant || 'Standard'}</span> •
             <a href={product.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline ml-2">Original URL</a>
           </p>
         </div>
@@ -97,9 +97,8 @@ export default function ProductDetailsPage() {
               <Package className="h-24 w-24 text-gray-300" />
             )}
             <div className="mt-6 text-center w-full">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                product.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${product.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
                 {product.availability === 'IN_STOCK' ? 'IN STOCK' : 'OUT OF STOCK'}
               </span>
             </div>
@@ -136,51 +135,50 @@ export default function ProductDetailsPage() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Price History Trend</h3>
               {intelligence?.priceChange !== 0 && intelligence?.priceChange !== null && (
-                <span className={`inline-flex items-center text-sm font-medium ${
-                  intelligence.priceChange < 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <span className={`inline-flex items-center text-sm font-medium ${intelligence.priceChange < 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
                   {intelligence.priceChange < 0 ? <TrendingDown className="h-4 w-4 mr-1" /> : <TrendingUp className="h-4 w-4 mr-1" />}
                   {intelligence.priceChangePercentage}%
                 </span>
               )}
             </div>
-            
+
             <div className="h-[300px] w-full">
               {history.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#9ca3af', fontSize: 12 }}
                       dy={10}
                     />
-                    <YAxis 
-                      domain={['auto', 'auto']} 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <YAxis
+                      domain={['auto', 'auto']}
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#9ca3af', fontSize: 12 }}
                       tickFormatter={(value) => `₹${value}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Price']}
+                      formatter={(value: any) => [`₹${Number(value).toLocaleString()}`, 'Price']}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="price" 
-                      stroke="#4f46e5" 
+                    <Area
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#4f46e5"
                       strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorPrice)" 
+                      fillOpacity={1}
+                      fill="url(#colorPrice)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -240,9 +238,8 @@ export default function ProductDetailsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          seller.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${seller.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {seller.availability === 'IN_STOCK' ? 'In Stock' : 'Out of Stock'}
                         </span>
                       </td>

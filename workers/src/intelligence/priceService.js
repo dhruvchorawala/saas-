@@ -1,15 +1,7 @@
 const mongoose = require('mongoose');
 
-// PriceHistory Schema for Worker
-const PriceHistorySchema = new mongoose.Schema({
-  product: mongoose.Schema.ObjectId,
-  price: Number,
-  mrp: Number,
-  discount: String,
-  seller: String,
-  availability: String
-}, { timestamps: true });
-const PriceHistory = mongoose.models.PriceHistory || mongoose.model('PriceHistory', PriceHistorySchema);
+const PriceHistory = require('../../backend/src/models/PriceHistory');
+const AvailabilitySnapshot = require('../../backend/src/models/AvailabilitySnapshot');
 
 class PriceIntelligenceService {
   static async processSnapshot(product, scrapedData) {
@@ -26,7 +18,23 @@ class PriceIntelligenceService {
       mrp: scrapedData.mrp,
       discount: scrapedData.discount,
       seller: scrapedData.seller,
-      availability: scrapedData.availability
+      availability: scrapedData.availability,
+      currency: scrapedData.currency,
+      shippingCost: scrapedData.shippingCost,
+      effectivePrice: scrapedData.effectivePrice
+    });
+
+    // Create Availability snapshot
+    let availabilityStatus = 'UNKNOWN';
+    if (scrapedData.availability === 'In Stock') availabilityStatus = 'IN_STOCK';
+    else if (scrapedData.availability === 'Out of Stock') availabilityStatus = 'OUT_OF_STOCK';
+
+    await AvailabilitySnapshot.create({
+      product: product._id,
+      seller: scrapedData.seller,
+      status: availabilityStatus,
+      deliveryEstimate: scrapedData.estimatedDeliveryDate,
+      shippingCost: scrapedData.shippingCost
     });
 
     // Calculate Intelligence

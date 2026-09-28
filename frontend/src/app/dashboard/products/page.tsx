@@ -38,8 +38,8 @@ export default function ProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -50,10 +50,10 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Tracked Products</h1>
           <p className="text-sm text-gray-500 mt-1">Manage and view your monitored items</p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm text-sm">
+        <Link href="/products/add" className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm text-sm">
           <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </button>
+          Track New Product
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -127,12 +127,11 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        product.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' : 
-                        product.availability === 'OUT_OF_STOCK' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {product.availability === 'IN_STOCK' ? 'In Stock' : 
-                         product.availability === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Unknown'}
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${product.availability === 'IN_STOCK' ? 'bg-green-100 text-green-800' :
+                          product.availability === 'OUT_OF_STOCK' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {product.availability === 'IN_STOCK' ? 'In Stock' :
+                          product.availability === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

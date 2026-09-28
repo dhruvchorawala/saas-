@@ -4,25 +4,7 @@ const ScraperManager = require('../scrapers/ScraperManager');
 const browserService = require('../scrapers/BrowserService');
 
 // Mongoose Model connection
-// We need to define the schema since workers are separate from backend
-const mongoose = require('mongoose');
-const ProductSchema = new mongoose.Schema({
-  name: String,
-  brand: String,
-  image: String,
-  price: Number,
-  mrp: Number,
-  discount: String,
-  currency: String,
-  seller: String,
-  variant: String,
-  availability: String,
-  deliveryCharge: Number,
-  estimatedDeliveryDate: String,
-  url: String,
-  trackingStatus: String
-}, { strict: false, timestamps: true });
-const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+const Product = require('../../backend/src/models/Product');
 
 console.log('[Worker] Initializing scrapeWorker...');
 
@@ -57,6 +39,12 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
       availability: scrapedData.availability,
       deliveryCharge: scrapedData.deliveryCharge,
       estimatedDeliveryDate: scrapedData.estimatedDeliveryDate,
+      shippingCost: scrapedData.shippingCost,
+      effectivePrice: scrapedData.effectivePrice,
+      internalProductId: scrapedData.internalProductId,
+      sourceProductId: scrapedData.sourceProductId,
+      sku: scrapedData.sku,
+      asin: scrapedData.asin,
       ...updateFields // Inject calculated history aggregates
     });
 
@@ -77,6 +65,15 @@ const scrapeWorker = new Worker('scrape-queue', async (job) => {
 
   } catch (err) {
     console.error(`[Job ${job.id}] Failed: ${err.message}`);
+    // Update product to indicate failure so the UI doesn't hang indefinitely
+    try {
+      await Product.findByIdAndUpdate(productId, {
+        name: 'Scrape Failed: ' + (err.message || 'Unknown error').substring(0, 50),
+        trackingStatus: 'PAUSED'
+      });
+    } catch (dbErr) {
+      console.error(`[Job ${job.id}] Failed to update DB on error: ${dbErr.message}`);
+    }
     throw err; // BullMQ will handle retries based on queue configuration
   }
 }, {

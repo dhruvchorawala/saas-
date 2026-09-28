@@ -21,7 +21,11 @@ const PriceHistorySchema = new mongoose.Schema({
   },
   availability: {
     type: String
-  }
+  },
+  currency: { type: String },
+  shippingCost: { type: Number, default: 0 },
+  effectivePrice: { type: Number },
+  capturedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // Optimize querying historical data ordered by time

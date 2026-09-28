@@ -2,13 +2,13 @@ const ChangeDetector = require('../ChangeDetector');
 
 describe('Event-Driven Change Detection', () => {
   it('should detect a price drop', () => {
-    const oldProduct = { price: 1000 };
+    const oldProduct = { currentPrice: 1000 };
     const scrapedData = { price: 800 };
 
     const changes = ChangeDetector.detectChanges(oldProduct, scrapedData);
 
-    expect(changes).toContain('PRICE_DECREASE');
-    expect(changes).not.toContain('PRICE_INCREASE');
+    expect(changes.isPriceDrop).toBe(true);
+    expect(changes.isPriceIncrease).toBe(false);
   });
 
   it('should detect an out-of-stock event', () => {
@@ -17,7 +17,7 @@ describe('Event-Driven Change Detection', () => {
 
     const changes = ChangeDetector.detectChanges(oldProduct, scrapedData);
 
-    expect(changes).toContain('OUT_OF_STOCK');
+    expect(changes.isOutOfStock).toBe(true);
   });
 
   it('should detect a back-in-stock event', () => {
@@ -26,15 +26,15 @@ describe('Event-Driven Change Detection', () => {
 
     const changes = ChangeDetector.detectChanges(oldProduct, scrapedData);
 
-    expect(changes).toContain('BACK_IN_STOCK');
+    expect(changes.isBackInStock).toBe(true);
   });
 
   it('should return no changes if data is identical', () => {
-    const oldProduct = { price: 1000, availability: 'IN_STOCK' };
+    const oldProduct = { currentPrice: 1000, availability: 'IN_STOCK' };
     const scrapedData = { price: 1000, availability: 'IN_STOCK' };
 
     const changes = ChangeDetector.detectChanges(oldProduct, scrapedData);
 
-    expect(changes.length).toEqual(0);
+    expect(changes.hasChanged).toBe(false);
   });
 });

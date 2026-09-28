@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Shield, Mail, User, Loader2, Save } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, loading, checkUserLoggedIn } = useAuth();
@@ -25,7 +25,12 @@ export default function ProfilePage() {
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen mesh-bg flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium">Loading profile...</p>
+      </div>
+    );
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -43,60 +48,84 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
-        <div className="px-4 py-5 sm:px-6 flex items-center space-x-3">
-          <UserCircle className="h-8 w-8 text-indigo-600" />
-          <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">User Profile</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application role.</p>
+    <div className="min-h-screen mesh-bg pt-24 pb-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in-up">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold text-2xl uppercase">
+              {user.name ? user.name.charAt(0) : 'U'}
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Your Profile</h1>
+              <p className="text-sm text-slate-500 font-medium mt-1">Manage your account settings and preferences.</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-sm">
+            <Shield className="w-4 h-4 mr-2 text-indigo-500" />
+            Role: {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
           </div>
         </div>
-        <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-          <dl className="sm:divide-y sm:divide-gray-200">
-            <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Role</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  {user.role}
-                </span>
-              </dd>
-            </div>
-          </dl>
+
+        {/* Profile Form */}
+        <div className="glass rounded-3xl p-8 sm:p-10 shadow-sm border border-white/60 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Personal Information</h2>
           
-          <form onSubmit={handleUpdate} className="px-4 py-5 sm:px-6 border-t border-gray-200 space-y-6">
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-              <div className="sm:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Full name</label>
-                <div className="mt-1">
+          <form onSubmit={handleUpdate} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Full Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-slate-400" />
+                  </div>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                    className="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium text-slate-900 outline-none"
+                    placeholder="John Doe"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Email address</label>
-                <div className="mt-1">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                    className="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium text-slate-900 outline-none"
+                    placeholder="you@example.com"
                   />
                 </div>
               </div>
+
             </div>
-            <div className="flex justify-end">
+
+            <div className="pt-6 border-t border-slate-100 flex justify-end">
               <button
                 type="submit"
-                disabled={isUpdating}
-                className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                disabled={isUpdating || (name === user.name && email === user.email)}
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-indigo-600 transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-slate-900 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
               >
-                {isUpdating ? 'Saving...' : 'Save Changes'}
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
           </form>

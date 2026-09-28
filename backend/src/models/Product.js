@@ -49,7 +49,36 @@ const ProductSchema = new mongoose.Schema({
   highestPrice: { type: Number },
   averagePrice: { type: Number },
   priceChange: { type: Number },
-  priceChangePercentage: { type: Number }
+  priceChangePercentage: { type: Number },
+  availability: {
+    type: String,
+    enum: ['In Stock', 'Out of Stock', 'Unknown'],
+    default: 'Unknown'
+  },
+  currency: { type: String, trim: true },
+  mrp: { type: Number },
+  discount: { type: String, trim: true },
+  seller: { type: String, trim: true },
+  deliveryCharge: { type: Number },
+  shippingCost: { type: Number, default: 0 },
+  effectivePrice: { type: Number },
+  estimatedDeliveryDate: { type: String, trim: true },
+  
+  // Product Identity Fields
+  internalProductId: { type: String, index: true, sparse: true },
+  sourceProductId: { type: String, index: true, sparse: true }, // e.g. B08N5WRWNW
+  sku: { type: String, index: true, sparse: true },
+  asin: { type: String, index: true, sparse: true },
+  gtin: { type: String },
+  ean: { type: String },
+  upc: { type: String },
+  mpn: { type: String },
+  modelNumber: { type: String },
+  
+  // Additional Variant Attributes
+  color: { type: String },
+  size: { type: String },
+  storage: { type: String }
 }, { timestamps: true });
 
 // Production Readiness Indexes

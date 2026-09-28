@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { ArrowRight, Lock, Mail, Activity, User } from 'lucide-react';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -15,70 +16,99 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-            Create an account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Start tracking prices effortlessly
-          </p>
+    <div className="min-h-screen mesh-bg flex items-center justify-center p-4">
+      {/* Decorative background elements */}
+      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl mix-blend-multiply animate-pulse-slow"></div>
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl mix-blend-multiply animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+
+      <div className="w-full max-w-md z-10 animate-fade-in-up">
+        {/* Logo/Brand */}
+        <div className="flex justify-center mb-8">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
+              <Activity className="w-7 h-7 text-white" />
+            </div>
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">UPAI</span>
+          </Link>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input
-                type="text"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-              <input
-                type="email"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-              />
-            </div>
+
+        {/* Card */}
+        <div className="glass rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Create an account</h2>
+            <p className="text-slate-500 mt-2 text-sm">Start tracking prices effortlessly</p>
           </div>
 
-          <div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm placeholder-slate-400 text-slate-900 outline-none"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Email address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm placeholder-slate-400 text-slate-900 outline-none"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm placeholder-slate-400 text-slate-900 outline-none"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/25 mt-6 group"
             >
-              Sign up
+              Sign Up
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-slate-500 font-medium">
+              Already have an account?{' '}
+              <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-bold hover:underline underline-offset-4">
+                Sign in
+              </Link>
+            </p>
           </div>
-        </form>
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

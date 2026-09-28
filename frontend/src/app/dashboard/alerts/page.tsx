@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BellRing, Trash2, Plus, Package } from 'lucide-react';
+import { BellRing, Trash2, Plus, Package, Loader2, AlertTriangle, TrendingDown } from 'lucide-react';
 
 interface Alert {
   _id: string;
@@ -63,57 +63,101 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Active Alerts</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your price and availability notifications</p>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-pink-500/20">
+            <BellRing className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Active Alerts</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">Manage notifications for price drops and restocks.</p>
+          </div>
         </div>
-        <button className="inline-flex items-center px-4 py-2 bg-indigo-600 rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
-          <Plus className="h-4 w-4 mr-2" />
+        <button className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-indigo-600 transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5">
+          <Plus className="h-5 w-5 mr-2" />
           New Alert
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Insight Card */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="glass rounded-2xl p-6 border border-white/60 flex items-start space-x-4">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+            <BellRing className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-500">Total Active Alerts</p>
+            <p className="text-2xl font-bold text-slate-900">{alerts.length}</p>
+          </div>
+        </div>
+        <div className="glass rounded-2xl p-6 border border-white/60 flex items-start space-x-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <TrendingDown className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-500">Price Drops Caught</p>
+            <p className="text-2xl font-bold text-slate-900">12</p>
+          </div>
+        </div>
+        <div className="glass rounded-2xl p-6 border border-white/60 flex items-start space-x-4">
+          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-500">Action Required</p>
+            <p className="text-2xl font-bold text-slate-900">0</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts List */}
+      <div className="glass rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-gray-500">Loading alerts...</div>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+            <p className="text-slate-500 font-medium">Loading your alerts...</p>
+          </div>
         ) : alerts.length === 0 ? (
           <div className="p-16 text-center">
-            <BellRing className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No active alerts</h3>
-            <p className="text-gray-500 mt-1">Set up an alert on any product page to get notified of price drops.</p>
+            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BellRing className="h-10 w-10 text-slate-300" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No active alerts</h3>
+            <p className="text-slate-500 mt-1 max-w-sm mx-auto">Set up an alert on any product page to get notified instantly of price drops or restocks.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-100/50">
             {alerts.map((alert) => (
-              <div key={alert._id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-colors">
+              <div key={alert._id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/50 transition-colors group">
                 <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                  <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="h-14 w-14 bg-white shadow-sm border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 p-2">
                     {alert.product?.image ? (
-                      <img src={alert.product.image} className="h-10 w-10 object-contain" alt="" />
+                      <img src={alert.product.image} className="h-full w-full object-contain" alt={alert.product.name} />
                     ) : (
-                      <Package className="h-6 w-6 text-gray-400" />
+                      <Package className="h-6 w-6 text-slate-300" />
                     )}
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">{alert.product?.name || 'Unknown Product'}</h3>
-                    <div className="flex items-center mt-1 space-x-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                    <h3 className="text-base font-bold text-slate-900">{alert.product?.name || 'Unknown Product'}</h3>
+                    <div className="flex items-center mt-2 space-x-2">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
                         {getAlertText(alert.type, alert.threshold)}
                       </span>
                       {alert.isActive ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Paused</span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-50 text-slate-600 border border-slate-200">Paused</span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-end sm:ml-4">
-                  <button 
+                <div className="flex items-center justify-end sm:ml-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
                     onClick={() => deleteAlert(alert._id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all hover:shadow-sm"
+                    title="Delete Alert"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

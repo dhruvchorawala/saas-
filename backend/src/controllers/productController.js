@@ -128,14 +128,18 @@ exports.addProduct = async (req, res, next) => {
 
     // Push scraping job to Redis queue asynchronously if URL was provided
     if (isUrlScrape) {
-      const scrapeQueue = require('../queues/scrapeQueue');
-      await scrapeQueue.add('SCRAPE_PRODUCT', {
-        productId: product._id,
-        url: product.url,
-        userId: req.user.id
-      }, {
-        priority: 1 // High priority for manual adds
-      });
+      try {
+        const scrapeQueue = require('../queues/scrapeQueue');
+        await scrapeQueue.add('SCRAPE_PRODUCT', {
+          productId: product._id,
+          url: product.url,
+          userId: req.user.id
+        }, {
+          priority: 1 // High priority for manual adds
+        });
+      } catch (queueErr) {
+        console.error('Failed to enqueue scrape job:', queueErr.message);
+      }
     }
 
     res.status(201).json({ success: true, data: product });
