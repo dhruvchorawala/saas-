@@ -1,18 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { ArrowRight, Lock, Mail, Activity, User } from 'lucide-react';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { register } = useAuth();
+  const router = useRouter();
+  const next = useSearchParams().get('next');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    register({ name, email, password });
+    setSubmitting(true);
+    const ok = await register({ name, email, password });
+    setSubmitting(false);
+    if (ok) router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
   };
 
   return (
@@ -94,7 +101,8 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/25 mt-6 group"
+              disabled={submitting}
+              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/25 mt-6 group disabled:opacity-60"
             >
               Sign Up
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -112,5 +120,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

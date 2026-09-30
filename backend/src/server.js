@@ -1,34 +1,42 @@
 const app = require('./app');
 const connectDB = require('./config/db');
-
-// Connect to database
-connectDB();
-
-// Route files
-const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
-const alertRoutes = require('./routes/alertRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const healthRoutes = require('./routes/healthRoutes');
-
-// Mount routers
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/alerts', alertRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/health', healthRoutes);
+const { seedCatalog } = require('./seed');
+const scheduler = require('./services/scheduler');
+const { closeBrowser } = require('./scrapers/browser');
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+async function start() {
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not set. Copy backend/.env.example to backend/.env first.');
+    process.exit(1);
+  }
+
+  await connectDB();
+
+  const added = await seedCatalog();
+  if (added) console.log(`[seed] Added ${added} catalog product(s)`);
+
+  const server = app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+
+  await scheduler.start();
+
+  const shutdown = async () => {
+    console.log('Shutting down...');
+    await closeBrowser();
+    server.close(() => process.exit(0));
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+process.on('unhandledRejection', err => {
+  console.error(`Unhandled rejection: ${err && err.stack ? err.stack : err}`);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.error(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+start().catch(err => {
+  console.error(err);
+  process.exit(1);
 });

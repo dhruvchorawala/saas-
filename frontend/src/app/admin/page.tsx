@@ -1,95 +1,111 @@
 'use client';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Users, Package, BellRing, Activity, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Users, Package, BellRing, CheckCircle, XCircle, Clock, RefreshCw, Store, Search, Bell, Loader2 } from 'lucide-react';
+import api, { apiError } from '../../services/api';
 
 interface AdminMetrics {
   totalUsers: number;
-  activeUsers: number;
   totalProducts: number;
+  pricedProducts: number;
+  failedProducts: number;
+  userProducts: number;
+  offersFound: number;
   activeAlerts: number;
-  scrapingJobs: number;
-  successfulJobs: number;
-  failedJobs: number;
-  activeJobs: number;
-  waitingJobs: number;
+  notifications: number;
+  queue: { waiting: number; active: number; completed: number; failed: number; concurrency: number };
 }
 
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    fetchMetrics();
+  const load = useCallback(() => {
+    api.get('/admin/analytics')
+      .then(res => setMetrics(res.data.data))
+      .catch(err => toast.error(apiError(err, 'Could not load metrics')));
   }, []);
 
-  const fetchMetrics = async () => {
+  useEffect(() => {
+    load();
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  const trigger = async (path: string) => {
+    setBusy(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/v1/admin/analytics', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMetrics(res.data.data);
-    } catch (error) {
-      console.error('Error fetching admin metrics', error);
+      const res = await api.post(path);
+      toast.success(`Queued ${res.data.data.queued} product(s) for a refresh`);
+      load();
+    } catch (err) {
+      toast.error(apiError(err));
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
-  if (loading) return <div className="p-12 text-center text-slate-500">Loading system metrics...</div>;
+  if (!metrics) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
 
-  const statCards = [
-    { name: 'Total Users', value: metrics?.totalUsers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { name: 'Active Users (USER role)', value: metrics?.activeUsers || 0, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-    { name: 'Products Tracked', value: metrics?.totalProducts || 0, icon: Package, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { name: 'Active Alerts', value: metrics?.activeAlerts || 0, icon: BellRing, color: 'text-orange-600', bg: 'bg-orange-100' },
-  ];
-
-  const jobCards = [
-    { name: 'Total Jobs in Queue', value: metrics?.scrapingJobs || 0, icon: Activity, color: 'text-slate-600', bg: 'bg-slate-100' },
-    { name: 'Waiting / Active', value: `${metrics?.waitingJobs || 0} / ${metrics?.activeJobs || 0}`, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    { name: 'Successful Jobs', value: metrics?.successfulJobs || 0, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { name: 'Failed Jobs', value: metrics?.failedJobs || 0, icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-100' },
+  const cards = [
+    { name: 'Users', value: metrics.totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { name: 'Catalog products', value: metrics.totalProducts, icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { name: 'Products with a price', value: metrics.pricedProducts, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { name: 'Added by user search', value: metrics.userProducts, icon: Search, color: 'text-violet-600', bg: 'bg-violet-100' },
+    { name: 'Live store offers', value: metrics.offersFound, icon: Store, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { name: 'Active alerts', value: metrics.activeAlerts, icon: BellRing, color: 'text-rose-600', bg: 'bg-rose-100' },
+    { name: 'Notifications sent', value: metrics.notifications, icon: Bell, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+    { name: 'Failed refreshes', value: metrics.failedProducts, icon: XCircle, color: 'text-slate-600', bg: 'bg-slate-200' },
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Platform Overview</h1>
-        <p className="text-sm text-slate-500 mt-1">Global metrics across the entire SaaS</p>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">System overview</h1>
+          <p className="text-sm text-slate-500 mt-1">Live numbers, refreshed every 5 seconds</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => trigger('/admin/refresh-stale')} disabled={busy} className="inline-flex items-center px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60">
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh stale prices
+          </button>
+          <button onClick={() => trigger('/admin/refresh-all')} disabled={busy} className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-900 text-sm font-bold text-white hover:bg-indigo-600 disabled:opacity-60">
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh everything
+          </button>
+        </div>
       </div>
 
-      {/* Global SaaS Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center">
-            <div className={`p-3 rounded-lg ${stat.bg} mr-4`}>
-              <stat.icon className={`h-6 w-6 ${stat.color}`} />
-            </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map(card => (
+          <div key={card.name} className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center">
+            <div className={`p-3 rounded-xl ${card.bg} mr-4`}><card.icon className={`h-5 w-5 ${card.color}`} /></div>
             <div>
-              <p className="text-sm font-medium text-slate-500">{stat.name}</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
+              <p className="text-xs font-semibold text-slate-500">{card.name}</p>
+              <p className="text-2xl font-bold text-slate-900">{card.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Background Worker Health</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {jobCards.map((stat) => (
-            <div key={stat.name} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center">
-              <div className={`p-3 rounded-lg ${stat.bg} mr-4`}>
-                <stat.icon className={`h-6 w-6 ${stat.color}`} />
-              </div>
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Refresh queue (in-process, {metrics.queue.concurrency} at a time)</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Waiting', value: metrics.queue.waiting, icon: Clock, color: 'text-amber-500' },
+            { label: 'Running', value: metrics.queue.active, icon: RefreshCw, color: 'text-blue-500' },
+            { label: 'Completed', value: metrics.queue.completed, icon: CheckCircle, color: 'text-emerald-500' },
+            { label: 'Failed', value: metrics.queue.failed, icon: XCircle, color: 'text-rose-500' },
+          ].map(item => (
+            <div key={item.label} className="p-4 rounded-xl bg-slate-50 flex items-center">
+              <item.icon className={`w-5 h-5 mr-3 ${item.color}`} />
               <div>
-                <p className="text-sm font-medium text-slate-500">{stat.name}</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
+                <p className="text-xs font-semibold text-slate-500">{item.label}</p>
+                <p className="text-xl font-bold text-slate-900">{item.value}</p>
               </div>
             </div>
           ))}
         </div>
+        <p className="text-xs text-slate-400 mt-4">Counts since the server last started.</p>
       </div>
     </div>
   );

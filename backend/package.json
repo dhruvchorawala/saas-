@@ -1,12 +1,16 @@
 {
   "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Price comparison API - finds the best price for brand products across Indian stores",
+  "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node node_modules/nodemon/bin/nodemon.js src/server.js",
-    "test": "node node_modules/cross-env/src/bin/cross-env.js NODE_ENV=test node node_modules/jest/bin/jest.js --detectOpenHandles --forceExit"
+    "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seed.js",
+    "make-admin": "node src/scripts/makeAdmin.js",
+    "check-stores": "node src/scripts/checkStores.js",
+    "postinstall": "playwright install chromium",
+    "test": "cross-env NODE_ENV=test jest --forceExit"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +18,7 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "bullmq": "^6.2.0",
+    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -23,17 +27,14 @@
     "express-rate-limit": "^8.6.2",
     "helmet": "^8.3.0",
     "hpp": "^0.2.3",
-    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.3",
-    "string-similarity": "^4.0.4",
-    "xss-clean": "^0.1.4",
-    "zod": "^4.4.3"
+    "nodemailer": "^7.0.0",
+    "playwright": "^1.55.0"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
     "jest": "^30.4.2",
-    "nodemon": "^3.1.14",
-    "supertest": "^7.2.2"
+    "nodemon": "^3.1.14"
   }
 }

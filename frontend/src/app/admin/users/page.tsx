@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../services/api';
 import { format } from 'date-fns';
 import { Shield, User as UserIcon } from 'lucide-react';
 
@@ -22,10 +22,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/v1/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/users');
       setUsers(res.data.data);
     } catch (error) {
       console.error('Error fetching users', error);

@@ -1,17 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { ArrowRight, Lock, Mail, Activity } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useAuth();
+  const router = useRouter();
+  const next = useSearchParams().get('next');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login({ email, password });
+    setSubmitting(true);
+    const ok = await login({ email, password });
+    setSubmitting(false);
+    if (ok) router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
   };
 
   return (
@@ -80,7 +87,8 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/25 mt-6 group"
+              disabled={submitting}
+              className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/25 mt-6 group disabled:opacity-60"
             >
               Sign In
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -89,7 +97,7 @@ export default function LoginPage() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-500 font-medium">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-bold hover:underline underline-offset-4">
                 Sign up free
               </Link>
@@ -98,5 +106,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

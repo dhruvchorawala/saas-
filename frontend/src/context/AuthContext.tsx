@@ -1,21 +1,27 @@
 'use client';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '../services/api';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import api, { apiError } from '../services/api';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: 'USER' | 'ADMIN';
+}
+
+interface Credentials {
+  name?: string;
+  email: string;
+  password: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (data: any) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  login: (data: Credentials) => Promise<boolean>;
+  register: (data: Credentials) => Promise<boolean>;
   logout: () => Promise<void>;
   checkUserLoggedIn: () => Promise<void>;
 }
@@ -27,50 +33,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkUserLoggedIn();
-  }, []);
-
-  const checkUserLoggedIn = async () => {
+  const checkUserLoggedIn = useCallback(async () => {
     try {
       const res = await api.get('/auth/me');
       setUser(res.data.data);
-    } catch (err) {
+    } catch {
       setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, []);
 
-  const login = async ({ email, password }: any) => {
+  useEffect(() => {
+    checkUserLoggedIn();
+  }, [checkUserLoggedIn]);
+
+  const login = async ({ email, password }: Credentials) => {
     try {
       const res = await api.post('/auth/login', { email, password });
       setUser(res.data.data);
-      toast.success('Logged in successfully');
-      router.push('/profile');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Login failed');
+      toast.success(`Welcome back, ${res.data.data.name.split(' ')[0]}!`);
+      return true;
+    } catch (err) {
+      toast.error(apiError(err, 'Login failed'));
+      return false;
     }
   };
 
-  const register = async ({ name, email, password }: any) => {
+  const register = async ({ name, email, password }: Credentials) => {
     try {
       const res = await api.post('/auth/register', { name, email, password });
       setUser(res.data.data);
-      toast.success('Registered successfully');
-      router.push('/profile');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Registration failed');
+      toast.success('Account created');
+      return true;
+    } catch (err) {
+      toast.error(apiError(err, 'Registration failed'));
+      return false;
     }
   };
 
   const logout = async () => {
     try {
       await api.get('/auth/logout');
+    } finally {
       setUser(null);
-      toast.success('Logged out successfully');
-      router.push('/login');
-    } catch (err) {
-      console.error(err);
+      toast.success('Logged out');
+      router.push('/');
     }
   };
 

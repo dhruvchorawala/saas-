@@ -17,8 +17,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PriceIntel SaaS",
-  description: "Universal Price & Availability Intelligence",
+  title: "UPAI – Best prices across Indian stores",
+  description: "Compare live prices for top brands on Amazon.in, Flipkart, Reliance Digital and Vijay Sales.",
 };
 
 export default function RootLayout({

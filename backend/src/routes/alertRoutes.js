@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAlert, getAlerts, deleteAlert } = require('../controllers/alertController');
+const { createAlert, getAlerts, updateAlert, deleteAlert } = require('../controllers/alertController');
 const { protect } = require('../middlewares/auth');
 
 const router = express.Router();
@@ -12,6 +12,7 @@ router.route('/')
   .get(getAlerts);
 
 router.route('/:id')
+  .patch(updateAlert)
   .delete(deleteAlert);
 
 module.exports = router;

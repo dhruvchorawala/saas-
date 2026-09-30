@@ -1,0 +1,76 @@
+// Curated catalog of popular brand products sold in India.
+// Only identities live here — every price is fetched live from the stores.
+// `name` excludes the brand; `variant` pins the exact storage/size so
+// different variants never get compared with each other.
+module.exports = [
+  // ---------- Smartphones ----------
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 18 Pro', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 18 Pro Max', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 17', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 17 Pro', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 17 Pro Max', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone Air', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 17e', variant: '256GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 16', variant: '128GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 16 Plus', variant: '128GB' },
+  { category: 'smartphones', brand: 'Apple', name: 'iPhone 15', variant: '128GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S26 Ultra', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S26', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S25 Ultra', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S25', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S25 FE', variant: '128GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy S24', variant: '128GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy Z Fold7', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy Z Flip7', variant: '256GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy A56', variant: '128GB' },
+  { category: 'smartphones', brand: 'Samsung', name: 'Galaxy A36', variant: '128GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'OnePlus 15', variant: '256GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'OnePlus 15R', variant: '512GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'Nord 6', variant: '256GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'OnePlus 13', variant: '256GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'OnePlus 13R', variant: '256GB' },
+  { category: 'smartphones', brand: 'OnePlus', name: 'Nord CE6', variant: '128GB' },
+  { category: 'smartphones', brand: 'Google', name: 'Pixel 10', variant: '256GB' },
+  { category: 'smartphones', brand: 'Google', name: 'Pixel 10 Pro', variant: '256GB' },
+  { category: 'smartphones', brand: 'Xiaomi', name: 'Redmi Note 14 Pro', variant: '256GB' },
+  { category: 'smartphones', brand: 'iQOO', name: 'iQOO 15', variant: '256GB' },
+
+  // ---------- Laptops ----------
+  // Windows laptops share names across many configurations, so each entry pins the exact processor.
+  { category: 'laptops', brand: 'Apple', name: 'MacBook Pro M5 14-inch', variant: '16GB 512GB', query: 'Apple MacBook Pro M5 14 inch 16GB 512GB' },
+  { category: 'laptops', brand: 'Apple', name: 'MacBook Air M5 13-inch', variant: '16GB 512GB', query: 'Apple MacBook Air M5 13 inch 16GB 512GB' },
+  { category: 'laptops', brand: 'Lenovo', name: 'IdeaPad Slim 3 Core i5-1235U', variant: '16GB 512GB', query: 'Lenovo IdeaPad Slim 3 i5 1235U 16GB 512GB' },
+  { category: 'laptops', brand: 'Lenovo', name: 'IdeaPad Slim 3 Core i5-12450H', variant: '16GB 512GB', query: 'Lenovo IdeaPad Slim 3 i5 12450H 16GB 512GB' },
+  { category: 'laptops', brand: 'Lenovo', name: 'LOQ Core i5-12450HX RTX 3050', variant: '16GB 512GB', query: 'Lenovo LOQ i5 12450HX RTX 3050 16GB 512GB' },
+  { category: 'laptops', brand: 'HP', name: 'Professional 15 Core i5-1334U', variant: '16GB 512GB', query: 'HP 15 i5 1334U 16GB 512GB' },
+  { category: 'laptops', brand: 'HP', name: 'Victus Ryzen 7 7445HS RTX 3050', variant: '16GB 512GB', query: 'HP Victus Ryzen 7 7445HS RTX 3050 16GB 512GB' },
+  { category: 'laptops', brand: 'ASUS', name: 'TUF Gaming A15 Ryzen 7 RTX 3050', variant: '16GB 512GB', query: 'ASUS TUF Gaming A15 Ryzen 7 RTX 3050 16GB 512GB' },
+
+  // ---------- Audio ----------
+  { category: 'audio', brand: 'Sony', name: 'WH-1000XM6', variant: '' },
+  { category: 'audio', brand: 'Sony', name: 'WH-1000XM5', variant: '' },
+  { category: 'audio', brand: 'Sony', name: 'WF-1000XM5', variant: '' },
+  { category: 'audio', brand: 'Sony', name: 'WH-CH720N', variant: '' },
+  { category: 'audio', brand: 'Apple', name: 'AirPods Pro 3', variant: '' },
+  { category: 'audio', brand: 'Apple', name: 'AirPods 4', variant: '' },
+  { category: 'audio', brand: 'Apple', name: 'AirPods Max', variant: '' },
+  { category: 'audio', brand: 'Samsung', name: 'Galaxy Buds3 Pro', variant: '' },
+  { category: 'audio', brand: 'Samsung', name: 'Galaxy Buds3 FE', variant: '' },
+  { category: 'audio', brand: 'Bose', name: 'QuietComfort Ultra Headphones', variant: '' },
+  { category: 'audio', brand: 'JBL', name: 'Tune 770NC', variant: '' },
+  { category: 'audio', brand: 'JBL', name: 'Flip 6', variant: '' },
+  { category: 'audio', brand: 'Sennheiser', name: 'Momentum 4 Wireless', variant: '' },
+  { category: 'audio', brand: 'boAt', name: 'Rockerz 450', variant: '' },
+  { category: 'audio', brand: 'Nothing', name: 'Ear (3)', variant: '' },
+
+  // ---------- Wearables & tablets ----------
+  { category: 'wearables', brand: 'Apple', name: 'Watch Series 11 GPS', variant: '46mm' },
+  { category: 'wearables', brand: 'Apple', name: 'Watch SE 3 GPS', variant: '44mm' },
+  { category: 'wearables', brand: 'Samsung', name: 'Galaxy Watch8', variant: '44mm' },
+  { category: 'wearables', brand: 'Apple', name: 'iPad (A16) Wi-Fi', variant: '128GB', query: 'Apple iPad A16 WiFi 128GB' },
+  { category: 'wearables', brand: 'Apple', name: 'iPad Air M3 11-inch Wi-Fi', variant: '128GB', query: 'Apple iPad Air M3 11 inch WiFi 128GB' },
+  { category: 'wearables', brand: 'Apple', name: 'iPad mini (A17 Pro) Wi-Fi', variant: '128GB', query: 'Apple iPad mini A17 Pro WiFi 128GB' },
+  { category: 'wearables', brand: 'Samsung', name: 'Galaxy Tab S10 FE Wi-Fi', variant: '128GB', query: 'Samsung Galaxy Tab S10 FE 128GB' },
+  { category: 'wearables', brand: 'Samsung', name: 'Galaxy Tab S11 Wi-Fi', variant: '256GB', query: 'Samsung Galaxy Tab S11 256GB' },
+  { category: 'wearables', brand: 'OnePlus', name: 'Pad 3', variant: '256GB', query: 'OnePlus Pad 3 256GB' },
+];

@@ -1,52 +1,41 @@
-const { Queue } = require('bullmq');
-const IORedis = require('ioredis');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Offer = require('../models/Offer');
 const AlertRule = require('../models/AlertRule');
-const NotificationHistory = require('../models/NotificationHistory');
-
-// Initialize Redis connection for Queue Introspection
-const connection = new IORedis({
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  tls: process.env.REDIS_HOST?.includes('upstash.io') ? {} : undefined,
-});
-
-const scrapeQueue = new Queue('scrape-queue', { connection });
-const notificationQueue = new Queue('notification-queue', { connection });
+const Notification = require('../models/Notification');
+const refreshQueue = require('../services/refreshQueue');
+const { queueStaleProducts } = require('../services/scheduler');
 
 // @desc    Get admin dashboard metrics
 // @route   GET /api/v1/admin/analytics
 // @access  Private/Admin
 exports.getAdminAnalytics = async (req, res, next) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ role: 'USER' }); // Simplified active metric
-    const totalProducts = await Product.countDocuments();
-    const activeAlerts = await AlertRule.countDocuments({ isActive: true });
-    
-    // Attempt to get BullMQ stats
-    let jobCounts = { waiting: 0, active: 0, completed: 0, failed: 0 };
-    try {
-      jobCounts = await scrapeQueue.getJobCounts('waiting', 'active', 'completed', 'failed');
-    } catch (err) {
-      console.error('Failed to get job counts from Redis', err.message);
-    }
+    const [totalUsers, totalProducts, pricedProducts, failedProducts, userProducts, offersFound, activeAlerts, notifications] =
+      await Promise.all([
+        User.countDocuments(),
+        Product.countDocuments(),
+        Product.countDocuments({ bestPrice: { $gt: 0 } }),
+        Product.countDocuments({ refreshStatus: 'FAILED' }),
+        Product.countDocuments({ origin: 'USER' }),
+        Offer.countDocuments({ status: 'FOUND' }),
+        AlertRule.countDocuments({ isActive: true }),
+        Notification.countDocuments(),
+      ]);
 
     res.status(200).json({
       success: true,
       data: {
         totalUsers,
-        activeUsers,
         totalProducts,
+        pricedProducts,
+        failedProducts,
+        userProducts,
+        offersFound,
         activeAlerts,
-        scrapingJobs: jobCounts.waiting + jobCounts.active + jobCounts.completed + jobCounts.failed,
-        successfulJobs: jobCounts.completed,
-        failedJobs: jobCounts.failed,
-        activeJobs: jobCounts.active,
-        waitingJobs: jobCounts.waiting
-      }
+        notifications,
+        queue: refreshQueue.stats(),
+      },
     });
   } catch (err) {
     next(err);
@@ -65,42 +54,48 @@ exports.getUsers = async (req, res, next) => {
   }
 };
 
-// @desc    Get system jobs
+// @desc    Refresh jobs (running, waiting and recent)
 // @route   GET /api/v1/admin/jobs
 // @access  Private/Admin
 exports.getJobs = async (req, res, next) => {
   try {
-    // Determine which states to pull (active, waiting, failed, completed)
-    const type = req.query.type || 'active,waiting,failed';
-    const typesArray = type.split(',');
-    
-    let jobs = [];
-    try {
-      // Pull latest jobs from queue
-      jobs = await scrapeQueue.getJobs(typesArray, 0, 50, true);
-    } catch (err) {
-      console.error('Failed to fetch jobs from Redis', err.message);
-    }
-
-    const formattedJobs = jobs.map(j => ({
-      id: j.id,
-      name: j.name,
-      productId: j.data.productId,
-      url: j.data.url,
-      source: j.data.sourceId,
-      status: j.finishedOn ? (j.failedReason ? 'FAILED' : 'COMPLETED') : (j.processedOn ? 'ACTIVE' : 'WAITING'),
-      attempts: j.attemptsMade,
-      createdAt: j.timestamp,
-      startedAt: j.processedOn,
-      completedAt: j.finishedOn,
-      failedReason: j.failedReason
-    }));
+    const jobs = refreshQueue.jobs();
+    const products = await Product.find({ _id: { $in: [...new Set(jobs.map(j => j.productId))] } }).select('name');
+    const names = new Map(products.map(p => [String(p._id), p.name]));
 
     res.status(200).json({
       success: true,
-      count: formattedJobs.length,
-      data: formattedJobs
+      stats: refreshQueue.stats(),
+      data: jobs.map(job => ({ ...job, productName: names.get(job.productId) || '(deleted product)' })),
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Queue a refresh of every product whose prices are stale
+// @route   POST /api/v1/admin/refresh-stale
+// @access  Private/Admin
+exports.refreshStale = async (req, res, next) => {
+  try {
+    const queued = await queueStaleProducts();
+    res.status(202).json({ success: true, data: { queued } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Queue a refresh of every product
+// @route   POST /api/v1/admin/refresh-all
+// @access  Private/Admin
+exports.refreshAll = async (req, res, next) => {
+  try {
+    const products = await Product.find().select('_id').sort('lastCheckedAt');
+    let queued = 0;
+    for (const p of products) {
+      if (refreshQueue.add(p._id, { reason: 'admin refresh-all' })) queued++;
+    }
+    res.status(202).json({ success: true, data: { queued } });
   } catch (err) {
     next(err);
   }

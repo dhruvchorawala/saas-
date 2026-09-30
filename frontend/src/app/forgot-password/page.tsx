@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import api from '../../services/api';
+import api, { apiError } from '../../services/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -13,17 +13,17 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       await api.post('/auth/forgotpassword', { email });
-      toast.success('Password reset instructions sent (Check backend console)');
+      toast.success('If that email is registered, a reset link is on its way.');
       setEmail('');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to send reset email');
+    } catch (err) {
+      toast.error(apiError(err, 'Failed to send reset email'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
         <div>
           <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">

@@ -5,6 +5,7 @@ const {
   logout,
   getMe,
   updateDetails,
+  updatePassword,
   forgotPassword,
   resetPassword
 } = require('../controllers/authController');
@@ -19,7 +20,8 @@ router.post('/login', authLimiter, login);
 router.get('/logout', logout);
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, updateDetails);
-router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resettoken', resetPassword);
+router.put('/updatepassword', protect, authLimiter, updatePassword);
+router.post('/forgotpassword', authLimiter, forgotPassword);
+router.put('/resetpassword/:resettoken', authLimiter, resetPassword);
 
 module.exports = router;

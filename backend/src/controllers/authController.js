@@ -1,23 +1,20 @@
-const User = require('../models/User');
 const crypto = require('crypto');
+const User = require('../models/User');
+const mailer = require('../services/mailer');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
-
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'USER' // default to USER if not specified
-    });
-
+    const { name, email, password } = req.body;
+    // Role is never taken from the request; promote admins with `npm run make-admin`
+    const user = await User.create({ name, email, password });
     sendTokenResponse(user, 201, res);
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, error: 'An account with this email already exists' });
+    }
     next(err);
   }
 };
@@ -29,21 +26,12 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
     if (!email || !password) {
       return res.status(400).json({ success: false, error: 'Please provide an email and password' });
     }
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({ success: false, error: 'Invalid credentials' });
-    }
-
-    // Check if password matches
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
+    const user = await User.findOne({ email: String(email).toLowerCase().trim() }).select('+password');
+    if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -55,33 +43,17 @@ exports.login = async (req, res, next) => {
 
 // @desc    Log user out / clear cookie
 // @route   GET /api/v1/auth/logout
-// @access  Private
-exports.logout = (req, res, next) => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
-  });
-
-  res.status(200).json({
-    success: true,
-    data: {}
-  });
+// @access  Public
+exports.logout = (req, res) => {
+  res.clearCookie('token', cookieOptions());
+  res.status(200).json({ success: true, data: {} });
 };
 
 // @desc    Get current logged in user
 // @route   GET /api/v1/auth/me
 // @access  Private
-exports.getMe = async (req, res, next) => {
-  try {
-    // req.user is set in auth middleware
-    const user = await User.findById(req.user.id);
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (err) {
-    next(err);
-  }
+exports.getMe = (req, res) => {
+  res.status(200).json({ success: true, data: publicUser(req.user) });
 };
 
 // @desc    Update user profile
@@ -89,20 +61,40 @@ exports.getMe = async (req, res, next) => {
 // @access  Private
 exports.updateDetails = async (req, res, next) => {
   try {
-    const fieldsToUpdate = {
-      name: req.body.name,
-      email: req.body.email
-    };
+    const fieldsToUpdate = {};
+    if (req.body.name) fieldsToUpdate.name = req.body.name;
+    if (req.body.email) fieldsToUpdate.email = req.body.email;
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true
     });
 
-    res.status(200).json({
-      success: true,
-      data: user
-    });
+    res.status(200).json({ success: true, data: publicUser(user) });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, error: 'That email is already used by another account' });
+    }
+    next(err);
+  }
+};
+
+// @desc    Change password
+// @route   PUT /api/v1/auth/updatepassword
+// @access  Private
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Enter your current and new password' });
+    }
+    const user = await User.findById(req.user.id).select('+password');
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+    user.password = newPassword;
+    await user.save();
+    sendTokenResponse(user, 200, res);
   } catch (err) {
     next(err);
   }
@@ -113,22 +105,36 @@ exports.updateDetails = async (req, res, next) => {
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const email = String(req.body.email || '').toLowerCase().trim();
+    const user = await User.findOne({ email });
+    const genericReply = { success: true, data: 'If that email is registered, a reset link has been sent.' };
 
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'There is no user with that email' });
+    // Same reply whether or not the account exists, so emails can't be enumerated
+    if (!user) return res.status(200).json(genericReply);
+
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+
+    if (mailer.isConfigured()) {
+      try {
+        await mailer.sendMail({
+          to: user.email,
+          subject: 'Reset your password',
+          text: `Hi ${user.name},\n\nReset your password within 10 minutes using this link:\n${resetUrl}\n\nIf you didn't ask for this, ignore this email.`,
+        });
+      } catch (err) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+        return res.status(500).json({ success: false, error: 'Email could not be sent. Try again later.' });
+      }
+    } else {
+      // No SMTP configured (local development): print the link instead of emailing it
+      console.log(`[auth] Password reset link for ${user.email}: ${resetUrl}`);
     }
 
-    // Get reset token
-    const resetToken = user.getResetPasswordToken();
-
-    await user.save({ validateBeforeSave: false });
-
-    // In a real app, send email here. For Phase 2, we simulate it by logging to console
-    console.log(`[SIMULATED EMAIL] Password reset token for ${user.email}: ${resetToken}`);
-    console.log(`Reset URL: http://localhost:3000/reset-password/${resetToken}`);
-
-    res.status(200).json({ success: true, data: 'Email sent (check backend console)' });
+    res.status(200).json(genericReply);
   } catch (err) {
     next(err);
   }
@@ -139,7 +145,6 @@ exports.forgotPassword = async (req, res, next) => {
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
   try {
-    // Get hashed token
     const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
 
     const user = await User.findOne({
@@ -148,10 +153,9 @@ exports.resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(400).json({ success: false, error: 'Invalid token' });
+      return res.status(400).json({ success: false, error: 'This reset link is invalid or has expired' });
     }
 
-    // Set new password
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -163,30 +167,24 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 
+function publicUser(user) {
+  return { id: user._id, name: user.name, email: user.email, role: user.role };
+}
+
+function cookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  };
+}
+
 // Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+function sendTokenResponse(user, statusCode, res) {
   const token = user.getSignedJwtToken();
+  const days = Number(process.env.JWT_COOKIE_EXPIRE) || 30;
 
-  const options = {
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
-    httpOnly: true
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
-
-  // Remove password from output just in case
-  const userData = {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role
-  };
-
-  res.status(statusCode).cookie('token', token, options).json({
-    success: true,
-    token,
-    data: userData
-  });
-};
+  res.status(statusCode)
+    .cookie('token', token, { ...cookieOptions(), expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000) })
+    .json({ success: true, token, data: publicUser(user) });
+}

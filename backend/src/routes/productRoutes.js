@@ -1,34 +1,28 @@
 const express = require('express');
 const {
   getProducts,
+  getFacets,
   getProduct,
-  addProduct,
-  updateProduct,
+  getProductHistory,
+  discoverProduct,
+  refreshProduct,
   deleteProduct
 } = require('../controllers/productController');
-
-const { protect } = require('../middlewares/auth');
+const { protect, optionalAuth, authorize } = require('../middlewares/auth');
+const { discoverLimiter } = require('../middlewares/rateLimit');
 
 const router = express.Router();
 
-router.use(protect); // All product routes are protected
-
-router.route('/')
-  .get(getProducts)
-  .post(addProduct);
+// Browsing the catalog is public; changing it requires an account
+router.get('/', getProducts);
+router.get('/facets', getFacets);
+router.post('/discover', protect, discoverLimiter, discoverProduct);
 
 router.route('/:id')
-  .get(getProduct)
-  .put(updateProduct)
-  .delete(deleteProduct);
+  .get(optionalAuth, getProduct)
+  .delete(protect, authorize('ADMIN'), deleteProduct);
 
-router.route('/:id/history')
-  .get(exports.getProductHistory || require('../controllers/productController').getProductHistory);
-
-router.route('/:id/intelligence')
-  .get(exports.getProductIntelligence || require('../controllers/productController').getProductIntelligence);
-
-router.route('/:id/sellers')
-  .get(exports.getProductSellers || require('../controllers/productController').getProductSellers);
+router.get('/:id/history', getProductHistory);
+router.post('/:id/refresh', protect, refreshProduct);
 
 module.exports = router;

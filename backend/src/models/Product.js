@@ -1,90 +1,54 @@
 const mongoose = require('mongoose');
 
+const CATEGORIES = ['smartphones', 'laptops', 'audio', 'wearables'];
+
+// A product in the shared catalog. Prices are never stored here by hand:
+// the best* fields are derived from the live Offer documents after each refresh.
 const ProductSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please add a product name'],
     trim: true,
   },
-  brand: {
-    type: String,
-    trim: true,
-  },
-  category: {
-    type: String,
-    trim: true,
-  },
-  variant: {
-    type: String,
-    trim: true,
-  },
-  url: {
-    type: String,
-    match: [
-      /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/,
-      'Please use a valid URL with HTTP or HTTPS'
-    ]
-  },
-  image: {
-    type: String,
-    default: 'no-photo.jpg'
-  },
-  sourceId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'ProductSource',
-  },
-  user: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  trackingStatus: {
-    type: String,
-    enum: ['ACTIVE', 'PAUSED'],
-    default: 'ACTIVE'
-  },
-  currentPrice: { type: Number },
-  previousPrice: { type: Number },
-  lowestPrice: { type: Number },
+  brand: { type: String, trim: true },
+  category: { type: String, enum: CATEGORIES, default: 'smartphones' },
+  // Capacity/size that identifies the exact variant, e.g. "128GB" or "16GB 512GB"
+  variant: { type: String, trim: true, default: '' },
+  // Text sent to each store's search box
+  searchQuery: { type: String, required: true, trim: true },
+  // Normalised identity used to avoid duplicate catalog entries
+  key: { type: String, required: true, unique: true },
+  image: { type: String },
+
+  origin: { type: String, enum: ['CATALOG', 'USER'], default: 'CATALOG' },
+  createdBy: { type: mongoose.Schema.ObjectId, ref: 'User' },
+
+  // Aggregates computed from current offers
+  bestPrice: { type: Number },
+  bestStore: { type: String },
+  bestUrl: { type: String },
   highestPrice: { type: Number },
-  averagePrice: { type: Number },
-  priceChange: { type: Number },
-  priceChangePercentage: { type: Number },
-  availability: {
-    type: String,
-    enum: ['In Stock', 'Out of Stock', 'Unknown'],
-    default: 'Unknown'
-  },
-  currency: { type: String, trim: true },
   mrp: { type: Number },
-  discount: { type: String, trim: true },
-  seller: { type: String, trim: true },
-  deliveryCharge: { type: Number },
-  shippingCost: { type: Number, default: 0 },
-  effectivePrice: { type: Number },
-  estimatedDeliveryDate: { type: String, trim: true },
-  
-  // Product Identity Fields
-  internalProductId: { type: String, index: true, sparse: true },
-  sourceProductId: { type: String, index: true, sparse: true }, // e.g. B08N5WRWNW
-  sku: { type: String, index: true, sparse: true },
-  asin: { type: String, index: true, sparse: true },
-  gtin: { type: String },
-  ean: { type: String },
-  upc: { type: String },
-  mpn: { type: String },
-  modelNumber: { type: String },
-  
-  // Additional Variant Attributes
-  color: { type: String },
-  size: { type: String },
-  storage: { type: String }
+  storeCount: { type: Number, default: 0 },
+  inStock: { type: Boolean, default: false },
+  previousBestPrice: { type: Number },
+  priceChange: { type: Number, default: 0 },
+  priceChangePercentage: { type: Number, default: 0 },
+  lowestEverPrice: { type: Number },
+
+  refreshStatus: {
+    type: String,
+    enum: ['PENDING', 'REFRESHING', 'READY', 'FAILED'],
+    default: 'PENDING'
+  },
+  lastCheckedAt: { type: Date },
+  lastError: { type: String },
 }, { timestamps: true });
 
-// Production Readiness Indexes
-ProductSchema.index({ user: 1, name: 1 });
-ProductSchema.index({ user: 1, currentPrice: 1 });
-ProductSchema.index({ trackingStatus: 1 });
-ProductSchema.index({ user: 1, updatedAt: -1 });
+ProductSchema.index({ category: 1, brand: 1 });
+ProductSchema.index({ bestPrice: 1 });
+ProductSchema.index({ name: 'text', brand: 'text' });
+
+ProductSchema.statics.CATEGORIES = CATEGORIES;
 
 module.exports = mongoose.model('Product', ProductSchema);

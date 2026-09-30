@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Watchlist = require('../models/Watchlist');
 const Product = require('../models/Product');
 
@@ -6,20 +7,10 @@ const Product = require('../models/Product');
 // @access  Private
 exports.getWatchlist = async (req, res, next) => {
   try {
-    let watchlist = await Watchlist.findOne({ user: req.user.id }).populate({
-      path: 'products',
-      populate: {
-        path: 'sourceId',
-        select: 'name domain'
-      }
-    });
-
-    // Create empty watchlist if it doesn't exist
-    if (!watchlist) {
-      watchlist = await Watchlist.create({ user: req.user.id, products: [] });
-    }
-
-    res.status(200).json({ success: true, data: watchlist });
+    const watchlist = await Watchlist.findOne({ user: req.user.id })
+      .populate({ path: 'products', select: '-key' });
+    const products = watchlist ? watchlist.products.filter(Boolean) : [];
+    res.status(200).json({ success: true, count: products.length, data: products });
   } catch (err) {
     next(err);
   }
@@ -31,26 +22,16 @@ exports.getWatchlist = async (req, res, next) => {
 exports.addToWatchlist = async (req, res, next) => {
   try {
     const { productId } = req.body;
-
-    // Verify product exists and belongs to user
-    const product = await Product.findOne({ _id: productId, user: req.user.id });
-    if (!product) {
-      return res.status(404).json({ success: false, error: 'Product not found or not owned by you' });
+    if (!mongoose.isValidObjectId(productId) || !(await Product.exists({ _id: productId }))) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    let watchlist = await Watchlist.findOne({ user: req.user.id });
-    if (!watchlist) {
-      watchlist = await Watchlist.create({ user: req.user.id, products: [] });
-    }
-
-    if (watchlist.products.includes(productId)) {
-      return res.status(400).json({ success: false, error: 'Product already in watchlist' });
-    }
-
-    watchlist.products.push(productId);
-    await watchlist.save();
-
-    res.status(200).json({ success: true, data: watchlist });
+    const watchlist = await Watchlist.findOneAndUpdate(
+      { user: req.user.id },
+      { $addToSet: { products: productId } },
+      { upsert: true, returnDocument: 'after' }
+    );
+    res.status(200).json({ success: true, data: watchlist.products });
   } catch (err) {
     next(err);
   }
@@ -61,20 +42,15 @@ exports.addToWatchlist = async (req, res, next) => {
 // @access  Private
 exports.removeFromWatchlist = async (req, res, next) => {
   try {
-    const { productId } = req.params;
-
-    let watchlist = await Watchlist.findOne({ user: req.user.id });
-    if (!watchlist) {
-      return res.status(404).json({ success: false, error: 'Watchlist not found' });
+    if (!mongoose.isValidObjectId(req.params.productId)) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
     }
-
-    watchlist.products = watchlist.products.filter(
-      p => p.toString() !== productId
+    const watchlist = await Watchlist.findOneAndUpdate(
+      { user: req.user.id },
+      { $pull: { products: req.params.productId } },
+      { returnDocument: 'after' }
     );
-
-    await watchlist.save();
-
-    res.status(200).json({ success: true, data: watchlist });
+    res.status(200).json({ success: true, data: watchlist ? watchlist.products : [] });
   } catch (err) {
     next(err);
   }

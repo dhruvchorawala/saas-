@@ -1,52 +1,45 @@
-const express = require('express');
+const path = require('path');
 const dotenv = require('dotenv');
+
+// Load env vars from backend/.env regardless of the working directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
+const hpp = require('hpp');
 const errorHandler = require('./middlewares/error');
 const { apiLimiter } = require('./middlewares/rateLimit');
 
-// Load env vars
-dotenv.config({ path: './.env' });
-
-// Route files
-const auth = require('./routes/authRoutes');
-const products = require('./routes/productRoutes');
-const watchlist = require('./routes/watchlistRoutes');
-
 const app = express();
 
-// Body parser
-app.use(express.json());
-
-// Cookie parser
+app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
-
-// Security headers
 app.use(helmet());
-
-// Sanitize data
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
-const hpp = require('hpp');
-
 app.use(mongoSanitize());
-app.use(xss());
 app.use(hpp());
 
-// Enable CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // frontend URL
+  origin: (process.env.CLIENT_URL || 'http://localhost:3000').split(','),
   credentials: true
 }));
 
-// Apply global rate limiting
-app.use(apiLimiter);
+app.use('/api/', apiLimiter);
 
-// Mount routers
-app.use('/api/v1/auth', auth);
-app.use('/api/v1/products', products);
-app.use('/api/v1/watchlist', watchlist);
+app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/v1/products', require('./routes/productRoutes'));
+app.use('/api/v1/watchlist', require('./routes/watchlistRoutes'));
+app.use('/api/v1/alerts', require('./routes/alertRoutes'));
+app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
+app.use('/api/v1/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/v1/admin', require('./routes/adminRoutes'));
+app.use('/api/v1/health', require('./routes/healthRoutes'));
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, error: `Route not found: ${req.method} ${req.originalUrl}` });
+});
 
 // Error handler middleware (must be after routes)
 app.use(errorHandler);
